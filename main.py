@@ -33,7 +33,8 @@ def collate_fn(batch):
     return tuple(zip(*batch))
 
 def main():
-    device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    # device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    device = "cpu"
     save_folder = str(os.path.join(r'./checkpoint', datetime.now().strftime("%m%d%H%M%S")))
     
     seed_everything(42)
@@ -41,7 +42,7 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--epochs', type=int, default=200)
-    parser.add_argument('--batch_size', type=int, default=16)
+    parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--lr', type=float, default=1e-3)
     parser.add_argument('--device', type=str, default=device)    
 

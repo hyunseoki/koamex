@@ -154,6 +154,26 @@ def get_test_transforms():
     )
 
 
+def get_model():
+    from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
+    from torchvision.models.detection import KeypointRCNN
+
+    backbone = resnet_fpn_backbone(
+        backbone_name='resnet50',
+        pretrained=True,
+    )
+
+    model = KeypointRCNN(
+        backbone,
+        num_classes=1,
+        num_keypoints=30,
+    )
+
+    model.train()
+
+    return model
+
+
 if __name__ == '__main__':
     import pandas as pd
     import matplotlib.pyplot as plt
@@ -171,17 +191,23 @@ if __name__ == '__main__':
 
     image, targets = dataset[0]
 
-    image =  image.detach().cpu().numpy().transpose(1, 2, 0)
-    keypoints = targets['keypoints'].detach().cpu().numpy()[0][:, :2].astype(np.int64).tolist()
-    boxes = targets['boxes'].detach().cpu().numpy().astype(np.int64).tolist()
- 
-    image = draw(
-        img=image,
-        points=keypoints,
-        color=(0, 255, 0),
-        bboxes=boxes,
-        keypoint_names=KEYPOINT1_NAMES
-    )
+    for k, v in targets.items():
+        print(f'k: {k}, v: {v}')
+    
+    model = get_model()
+    model([image], [targets])
 
-    plt.imshow(image, 'gray')
-    plt.show()
+    # image =  image.detach().cpu().numpy().transpose(1, 2, 0)
+    # keypoints = targets['keypoints'].detach().cpu().numpy()[0][:, :2].astype(np.int64).tolist()
+    # boxes = targets['boxes'].detach().cpu().numpy().astype(np.int64).tolist()
+ 
+    # image = draw(
+    #     img=image,
+    #     points=keypoints,
+    #     color=(0, 255, 0),
+    #     bboxes=boxes,
+    #     keypoint_names=KEYPOINT1_NAMES
+    # )
+
+    # plt.imshow(image, 'gray')
+    # plt.show()
