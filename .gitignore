@@ -1,0 +1,9 @@
+
+data/*
+!data/data_split.csv
+!data/*.py
+
+checkpoint/*
+!checkpoint/.keeper
+
+*.pyc
