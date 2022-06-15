@@ -3,6 +3,8 @@ import random
 import numpy as np
 import torch
 import argparse
+import copy
+import cv2
 
 
 KEYPOINT1_NAMES = {
@@ -55,6 +57,33 @@ KEYPOINT2_NAMES = {
     4: 'Lt_distal_femoral_condyle_center',
     5: 'Lt_distal_medial_femoral_condyle',
 }
+
+def draw_keypoint(img, keypoints, scale=1, text=False):
+    dst = copy.copy(img)
+
+    for idx, point in enumerate(keypoints):
+        cv2.circle(
+            img=dst,
+            center=tuple((int(point[1]), int(point[0]))),
+            radius=int(20 * scale),
+            color=(255,0,0),
+            thickness=int(30 * scale),
+            lineType=cv2.LINE_AA,    
+        )
+        
+        if text:
+            cv2.putText(
+                img=dst,
+                text=str(idx),
+                org=tuple((int(point[1]), int(point[0]))),
+                fontFace=0,
+                fontScale=int(5*scale),
+                thickness=int(10*scale),
+                color=(0,255,0),        
+            )
+
+    return dst
+
 
 def seed_everything(seed):
     random.seed(seed)

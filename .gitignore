@@ -1,9 +1,11 @@
-
+wandb/
 data/*
-!data/data_split.csv
+!data/*.csv
 !data/*.py
 
 checkpoint/*
 !checkpoint/.keeper
 
 *.pyc
+
+

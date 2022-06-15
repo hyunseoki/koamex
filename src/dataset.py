@@ -8,129 +8,69 @@ import albumentations as A
 from albumentations.pytorch.transforms import ToTensorV2
 
 
-def keypoint2box(keypoint):
-    x1, y1 = min(keypoint[:, 0]), min(keypoint[:, 1])
-    x2, y2 = max(keypoint[:, 0]), max(keypoint[:, 1])
-
-    return [x1, y1, x2, y2]
-
-
 class KeypointDataset(torch.utils.data.Dataset):
-    def __init__(self, label_df, transforms=None, phase='train'):
+    def __init__(self, base_path, label_df, transforms=None):
+        self.base_path = base_path
         self.label_df = label_df
         self.transforms = transforms
-        self.phase = phase
 
     def __len__(self):
         return len(self.label_df)
     
     def __getitem__(self, index):
-        img_fn = self.label_df.iloc[index]['fn']
+        df_row = self.label_df.iloc[index]
 
-        assert os.path.isfile(img_fn), img_fn
-        # image = cv2.imread(img_fn, cv2.IMREAD_GRAYSCALE)
-        image = cv2.imread(img_fn)
-
-        keypoints1 = self.label_df.iloc[index]['keypoints1'].split(';')
-        keypoints1 = np.array([[float(p.split(',')[0]), float(p.split(',')[1])] for p in keypoints1], dtype=np.int64)    
-            
-        box1 = keypoint2box(keypoints1)
-        keypoints1 = keypoints1.tolist()   
-        bboxes = [box1]
-
-        # keypoints2 = self.label_df.iloc[index]['keypoints2'].split(';')
-        # keypoints2 = np.array([[float(p.split(',')[0]), float(p.split(',')[1])] for p in keypoints2], dtype=np.int64)
-
-        # x3, y3 = min(keypoints2[:, 0]), min(keypoints2[:, 1])
-        # x4, y4 = max(keypoints2[:, 0]), max(keypoints2[:, 1])        
-
-        # boxes = np.array([[x1, y1, x2, y2], [x3, y3, x4, y4]], dtype=np.int64)
+        task_n = df_row['task']
+        img_fn = os.path.join(self.base_path, task_n, 'images', df_row['fn'])
+        mask_fns = [os.path.join(self.base_path, task_n, 'mask', df_row['fn'].split('.')[0], f'{idx}.png') for idx in range(30)]
         
-        # keypoints2 = keypoints2.tolist()
-        
-        # labels = ['keypoints1', 'keypoints2']
-        # keypoints1.append('keypoints1')
-        # keypoints2.append('keypoints2')
-        # keypoints = [keypoints1, keypoints2]
+        image = cv2.imread(img_fn, cv2.IMREAD_GRAYSCALE)
+        mask = [cv2.imread(mask_fn, cv2.IMREAD_GRAYSCALE) for mask_fn in mask_fns]
 
-        # bboxes = [
-        #     [x1, y1, x2, y2, 'keypoints1'],
-        #     [x3, y3, x4, y4, 'keypoints2'],
-        # ]
-        
-        labels = np.array([1])
-        # labels= ['keypoints1']
-        targets ={
-            'image': image,
-            'bboxes': bboxes,
-            'labels': labels,
-            'keypoints': keypoints1,
-        }
+        assert type(image) == np.ndarray, img_fn
+        assert type(mask[0]) == np.ndarray
+     
+        if self.transforms != None:
+            mask = [m for m in mask]
+            transformed = self.transforms(image=image, masks=mask)
+            image, mask = transformed['image'], transformed['masks']
 
-
-        # targets ={
-        #     'image': image,
-        #     'bboxes': boxes,
-        #     'labels': labels,
-        #     'keypoints': keypoints1
-        # }
-
-        if self.transforms is not None:
-            targets = self.transforms(**targets)
-
-        image = targets['image']
         image = image / 255.0
 
-        targets = {
-            'labels': torch.as_tensor(targets['labels'], dtype=torch.int64),
-            'boxes': torch.as_tensor(targets['bboxes'], dtype=torch.float32),
-            'keypoints': torch.as_tensor(
-                np.concatenate([targets['keypoints'], np.ones((30, 1))], axis=1)[np.newaxis], dtype=torch.float32
-            )
-        }
+        for i in range(30):
+            # mask[i] = np.power(mask[i], 8)
+            if mask[i].max() == 0:
+                print(os.path.basename(img_fn))
+            mask[i] = mask[i] / mask[i].max()
+        
+        mask = np.array(mask, dtype=np.float32)
+        
+        if type(image) == torch.Tensor:
+            mask = torch.tensor(mask, dtype=torch.float32)
 
-        return image, targets
+        sample = dict()
+        
+        sample['id'] = os.path.join(task_n, os.path.basename(img_fn))
+        sample['input'] = image
+        sample['target'] = mask
 
-
-def draw(img, points, color=(255,0,0), bboxes=None, keypoint_names=None):
-    for idx, point in enumerate(points):      
-        img = cv2.circle(
-            img=img,
-            center=point,
-            radius=25,
-            color=color,
-            thickness=15,
-            lineType=cv2.LINE_AA,    
-        )
-    
-        if keypoint_names != None:
-            cv2.putText(
-                img=img,
-    #                 text=f'{idx}: {keypoint_names[idx]}', 
-                text=f'{idx}', 
-                org=tuple(point), 
-                fontFace=cv2.FONT_HERSHEY_SIMPLEX, 
-                fontScale=3.0,
-                color=(255, 255, 0),
-                thickness=3
-            )
-
-    for idx, bbox in enumerate(bboxes):
-        p0 = (int(bbox[0]), int(bbox[1]))
-        p1 = (int(bbox[2]), int(bbox[3]))
-        cv2.rectangle(image, p0, p1, (255, 0, 0), thickness=3)
-
-    return img
+        return sample
 
 
 def get_train_transforms():
     return A.Compose(
         [
+            A.RandomBrightnessContrast(p=0.3),
+            A.Affine(
+                scale=(0.9, 1.1),
+                rotate=(5),
+                translate_percent=(0.05, 0.05),
+                cval=0,
+                cval_mask=0,
+                p=0.3,
+            ),
             ToTensorV2(p=1.0),
-            # A.Rotate(limit=30, always_apply=True)
         ],
-        bbox_params=A.BboxParams(format='pascal_voc', label_fields=['labels']),
-        keypoint_params=A.KeypointParams(format='xy', remove_invisible=True),
     )
 
 
@@ -139,8 +79,6 @@ def get_valid_transforms():
         [
             ToTensorV2(p=1.0),
         ],
-        bbox_params=A.BboxParams(format='pascal_voc', label_fields=['labels']),
-        keypoint_params=A.KeypointParams(format='xy', remove_invisible=True),
     )
 
 
@@ -149,53 +87,82 @@ def get_test_transforms():
         [
             ToTensorV2(p=1.0),
         ],
-        bbox_params=A.BboxParams(format='pascal_voc', label_fields=['labels']),
-        keypoint_params=A.KeypointParams(format='xy', remove_invisible=True),
     )
-
-
-def get_model():
-    from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
-    from torchvision.models.detection import KeypointRCNN
-
-    backbone = resnet_fpn_backbone(
-        backbone_name='resnet50',
-        pretrained=True,
-    )
-
-    model = KeypointRCNN(
-        backbone,
-        num_classes=1,
-        num_keypoints=30,
-    )
-
-    model.train()
-
-    return model
 
 
 if __name__ == '__main__':
     import pandas as pd
-    import matplotlib.pyplot as plt
-    from util import (
-        KEYPOINT1_NAMES, KEYPOINT2_NAMES
-    )
+    import matplotlib.pyplot as plt    
+    import copy
     
-    label_df = pd.read_csv(r'data\data_split.csv')
+    def draw_keypoint(img, keypoints, scale=1):
+        dst = copy.copy(img)
+
+        for idx, point in enumerate(keypoints):
+            cv2.circle(
+                img=dst,
+                center=tuple((int(point[1]), int(point[0]))),
+                radius=int(20 * scale),
+                color=(255,0,0),
+                thickness=int(30 * scale),
+                lineType=cv2.LINE_AA,    
+            )
+            
+            cv2.putText(
+                img=dst,
+                text=str(idx),
+                org=tuple((int(point[1]), int(point[0]))),
+                fontFace=0,
+                fontScale=int(5*scale),
+                thickness=int(10*scale),
+                color=(0,255,0),        
+            )
+
+        return dst
+
+    label_df = pd.read_csv(r'F:\hyunseoki\koamex\data\data_split.csv')[:1]
     train_df = label_df[label_df['phase']=='train']
 
     dataset = KeypointDataset(
+        base_path=r'F:\hyunseoki\koamex\data\resized_scale5',
         label_df=train_df,
         transforms=get_train_transforms(),
+        # transforms=None,
     )
-
-    image, targets = dataset[0]
-
-    for k, v in targets.items():
-        print(f'k: {k}, v: {v}')
     
-    model = get_model()
-    model([image], [targets])
+    sample = dataset[0]
+    image = cv2.cvtColor(sample['input'].squeeze().numpy(), cv2.COLOR_GRAY2BGR)
+    mask = cv2.cvtColor(sample['target'][0].squeeze().numpy(), cv2.COLOR_GRAY2BGR)
+    
+    plt.subplot(1,2,1)
+    plt.imshow(image, 'gray')
+    plt.subplot(1,2,2)
+    plt.imshow(mask, 'gray')
+    plt.show()
+    
+
+    # keypoints = list()
+    # for idx in range(30):
+    #     m = mask[idx]
+    #     idx = (m==torch.max(m)).nonzero().numpy()[0]
+    #     keypoints.append(idx)
+
+    # mask = draw_keypoint(
+    #     image,
+    #     keypoints,
+    #     scale=0.2,
+    # )
+
+    # plt.imshow(mask)
+    # plt.show()
+
+    # image, targets = dataset[0]
+
+    # for k, v in targets.items():
+    #     print(f'k: {k}, v: {v}')
+    
+    # model = get_model()
+    # model([image], [targets])
 
     # image =  image.detach().cpu().numpy().transpose(1, 2, 0)
     # keypoints = targets['keypoints'].detach().cpu().numpy()[0][:, :2].astype(np.int64).tolist()
