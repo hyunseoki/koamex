@@ -30,6 +30,7 @@ def main():
     parser.add_argument('--batch_size', type=int, default=2)
     parser.add_argument('--lr', type=float, default=1e-3)
     parser.add_argument('--device', type=str, default=device) 
+    parser.add_argument('--num_kp', type=int, default=30)
 
     parser.add_argument('--model', type=str, default='custom')
     parser.add_argument('--base_path', type=str, default=base_path)
@@ -54,12 +55,14 @@ def main():
     train_dataset = KeypointDataset(
         base_path=args.base_path,
         label_df=train_df,
+        num_kp=args.num_kp,
         transforms=get_train_transforms(),
     )
 
     valid_dataset = KeypointDataset(
         base_path=args.base_path,
         label_df=valid_df,
+        num_kp=args.num_kp,
         transforms=get_valid_transforms(),
     )
 
@@ -83,7 +86,7 @@ def main():
         model = UNet(
             in_channels=1,
             n_filters=32,
-            out_channels=30,
+            out_channels=args.num_kp,
         )
         print('custom_unet is created')
     else:
@@ -94,7 +97,7 @@ def main():
             encoder_depth=5,
             decoder_attention_type='scse',
             in_channels=1,                  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
-            classes=30,                      # model output channels (number of classes in your dataset)
+            classes=args.num_kp,                      # model output channels (number of classes in your dataset)
             activation='softmax',
         )
         print('smp.Unet is created')
@@ -103,7 +106,7 @@ def main():
     # loss = torch.nn.CrossEntropyLoss()
     # loss = [L1_loss, L2_loss]
     if args.use_mre_as_loss:
-        mre = MeanRadialError(device=args.device)
+        mre = MeanRadialError(device=args.device, scale=1e-8)
         loss = [L2_loss, mre]
         print('[info msg] mre is used')
     else:    

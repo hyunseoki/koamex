@@ -9,10 +9,11 @@ from albumentations.pytorch.transforms import ToTensorV2
 
 
 class KeypointDataset(torch.utils.data.Dataset):
-    def __init__(self, base_path, label_df, transforms=None):
+    def __init__(self, base_path, label_df, num_kp=30, transforms=None):
         self.base_path = base_path
         self.label_df = label_df
         self.transforms = transforms
+        self.num_kp = num_kp
 
     def __len__(self):
         return len(self.label_df)
@@ -22,7 +23,7 @@ class KeypointDataset(torch.utils.data.Dataset):
 
         task_n = df_row['task']
         img_fn = os.path.join(self.base_path, task_n, 'images', df_row['fn'])
-        mask_fns = [os.path.join(self.base_path, task_n, 'mask', df_row['fn'].split('.')[0], f'{idx}.png') for idx in range(30)]
+        mask_fns = [os.path.join(self.base_path, task_n, 'mask', df_row['fn'].split('.')[0], f'{idx}.png') for idx in range(self.num_kp)]
         
         image = cv2.imread(img_fn, cv2.IMREAD_GRAYSCALE)
         mask = [cv2.imread(mask_fn, cv2.IMREAD_GRAYSCALE) for mask_fn in mask_fns]
@@ -37,7 +38,7 @@ class KeypointDataset(torch.utils.data.Dataset):
 
         image = image / 255.0
 
-        for i in range(30):
+        for i in range(self.num_kp):
             # mask[i] = np.power(mask[i], 8)
             if mask[i].max() == 0:
                 print(os.path.basename(img_fn))

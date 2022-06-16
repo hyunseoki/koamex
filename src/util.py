@@ -58,16 +58,22 @@ KEYPOINT2_NAMES = {
     5: 'Lt_distal_medial_femoral_condyle',
 }
 
-def draw_keypoint(img, keypoints, scale=1, text=False):
+def draw_keypoint(img,
+                  keypoints,
+                  keypoints_color=(255,0,0),
+                  keypoints_scale=1,
+                  text_color=(0,255,0),
+                  text_scale=1,
+                  text=False):
     dst = copy.copy(img)
 
     for idx, point in enumerate(keypoints):
         cv2.circle(
             img=dst,
             center=tuple((int(point[1]), int(point[0]))),
-            radius=int(20 * scale),
-            color=(255,0,0),
-            thickness=int(30 * scale),
+            radius=int(20 * keypoints_scale),
+            color=keypoints_color,
+            thickness=int(30 * keypoints_scale),
             lineType=cv2.LINE_AA,    
         )
         
@@ -77,9 +83,9 @@ def draw_keypoint(img, keypoints, scale=1, text=False):
                 text=str(idx),
                 org=tuple((int(point[1]), int(point[0]))),
                 fontFace=0,
-                fontScale=int(5*scale),
-                thickness=int(10*scale),
-                color=(0,255,0),        
+                fontScale=int(5*text_scale),
+                thickness=int(10*text_scale),
+                color=text_color,        
             )
 
     return dst
