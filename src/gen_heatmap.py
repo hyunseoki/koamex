@@ -57,9 +57,9 @@ def work(label_df, base_dir, dst_dir, target_height=640, target_width=480, scale
         mask_save_fn = os.path.basename(df_row['fn']).replace('png', 'npy')
         mask_save_fn = os.path.join(mask_save_dir, mask_save_fn)
         
-        if os.path.isfile(img_save_fn):
-            print(f'[info msg] {img_save_fn} is existing, process skipped')
-            continue
+        # if os.path.isfile(img_save_fn):
+        #     print(f'[info msg] {img_save_fn} is existing, process skipped')
+        #     continue
 
         criteria = int(df_row['img_h'] * 0.4)        
         img = cv2.imread(img_fn, 0)
@@ -75,7 +75,7 @@ def work(label_df, base_dir, dst_dir, target_height=640, target_width=480, scale
         img, keypoints = rescale(img=img, kp=keypoints, target_height=target_height, target_width=target_width)
         cv2.imwrite(img_save_fn, img)
         
-        mask_list = ()
+        mask_list = list()
         for idx, kp in enumerate(keypoints):
             mask = gen_heatmap(kp[0], kp[1], target_height, target_width, scale)
             mask_list.append(mask)
@@ -88,10 +88,10 @@ def work(label_df, base_dir, dst_dir, target_height=640, target_width=480, scale
 
 if __name__ == '__main__':
     class Config():
-        base_path = r'./data/raw_data'
-        dst_path = r'./data/resized_scale5'
-        label_fn = os.path.join(r'./data', 'data_split.csv')
         scale = 5.0 
+        base_path = r'./data/raw_data'
+        dst_path = rf'./data/resized_{scale}'
+        label_fn = os.path.join(r'./data', 'data_split_small.csv')       
 
         assert os.path.isdir(base_path)
         assert os.path.isfile(label_fn)
@@ -101,7 +101,7 @@ if __name__ == '__main__':
     label_df = pd.read_csv(Config.label_fn)
 
     # procs_nb = 1
-    procs_nb = 12
+    procs_nb = 18
     load_sz = len(label_df) // procs_nb
 
     procs = list()
