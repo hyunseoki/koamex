@@ -2,7 +2,7 @@ import os
 import numpy as np
 from multiprocessing import Process
 import numpy as np
-from math import exp
+from math import exp, ceil
 import pandas as pd
 from datetime import datetime
 import albumentations as A
@@ -88,9 +88,9 @@ def work(label_df, base_dir, dst_dir, target_height=640, target_width=480, scale
 
 if __name__ == '__main__':
     class Config():
-        scale = 5.0 
+        scale = 5 
         base_path = r'./data/raw_data'
-        dst_path = rf'./data/resized_{scale}'
+        dst_path = rf'./data/resized_scale{scale}'
         label_fn = os.path.join(r'./data', 'data_split_small.csv')       
 
         assert os.path.isdir(base_path)
@@ -102,7 +102,7 @@ if __name__ == '__main__':
 
     # procs_nb = 1
     procs_nb = 18
-    load_sz = len(label_df) // procs_nb
+    load_sz = ceil(len(label_df) / procs_nb)
 
     procs = list()
     
@@ -110,10 +110,10 @@ if __name__ == '__main__':
     for i in range(procs_nb):
         target_df = label_df.iloc[load_sz * i:load_sz * (i + 1)]
         proc = Process(target=work, args=(target_df, Config.base_path, Config.dst_path, 640, 480, Config.scale))       
-        print(f'[info msg] work[{i}] is assigned')
+        print(f'[info msg] process[{i}] is assigned to label_df[{load_sz * i}:{min(load_sz * (i + 1), len(label_df))}]')
         procs.append(proc)
         proc.start()
-        print(f'[info msg] work[{i}] starts')
+        
         
     for proc in procs:
         proc.join()
