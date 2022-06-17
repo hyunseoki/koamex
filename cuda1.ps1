@@ -4,12 +4,10 @@ function PyScript{
     Invoke-Expression -Command $cmd
 }
 
-python src/gen_heatmap.py
-
 $device = "cuda:1"
 ################################################################################################
 $model = "smp"
-$comments = "scale5_w_mre"
+$comments = "scale5_w_mre_kp30"
 $base_path = "./data/resized_scale5"
 $save_folder = "./checkpoint/$comments"
 
@@ -19,16 +17,17 @@ $train = "python main.py"  +
             " --lr 1e-3 " +
             " --device $device " +
             " --model $model" +
+            " --num_kp 30" + 
             " --base_path $base_path " +
             " --save_folder $save_folder" +
-            " --use_mre_as_loss true" + 
+            " --use_mre_as_loss True" + 
             " --comments $comments"
 
 PyScript($train)
 
 ################################################################################################
 $model = "smp"
-$comments = "scale5_wo_mre"
+$comments = "scale5_wo_mre_kp30"
 $base_path = "./data/resized_scale5"
 $save_folder = "./checkpoint/$comments"
 
@@ -38,9 +37,10 @@ $train = "python main.py"  +
             " --lr 1e-3 " +
             " --device $device " +
             " --model $model" +
+            " --num_kp 30" + 
             " --base_path $base_path " +
             " --save_folder $save_folder" +
-            " --use_mre_as_loss false" + 
+            " --use_mre_as_loss False" + 
             " --comments $comments"
 
 PyScript($train)

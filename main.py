@@ -26,17 +26,18 @@ def main():
     seed_everything(42)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epochs', type=int, default=3)
-    parser.add_argument('--batch_size', type=int, default=2)
-    parser.add_argument('--lr', type=float, default=1e-3)
-    parser.add_argument('--device', type=str, default=device) 
-    parser.add_argument('--num_kp', type=int, default=30)
+    parser.add_argument('--device', type=str, default=device)
 
     parser.add_argument('--model', type=str, default='custom')
     parser.add_argument('--base_path', type=str, default=base_path)
     parser.add_argument('--save_folder', type=str, default=save_folder)
 
-    parser.add_argument('--use_mre_as_loss', type=str2bool, default=False)
+    parser.add_argument('--epochs', type=int, default=3)
+    parser.add_argument('--batch_size', type=int, default=2)
+    parser.add_argument('--lr', type=float, default=1e-3)
+    parser.add_argument('--T0', type=int, default=50)
+    
+    parser.add_argument('--num_kp', type=int, default=30)
     parser.add_argument('--comments', type=str, default=None)
 
     args = parser.parse_args()
@@ -105,19 +106,13 @@ def main():
 
     # loss = torch.nn.CrossEntropyLoss()
     # loss = [L1_loss, L2_loss]
-    if args.use_mre_as_loss:
-        mre = MeanRadialError(device=args.device, scale=1e-8)
-        loss = [L2_loss, mre]
-        print('[info msg] mre is used')
-    else:    
-        loss = [L2_loss]
-        print('[info msg] mre is not used')
 
+    loss = [L2_loss, MeanRadialError(device=args.device, scale=1e-4)]
     metric = mean_radial_error
     # optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
     optimizer = torch.optim.Adam(model.parameters(), args.lr, betas=(0.9, 0.99))
-    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[50, 75], gamma=0.2) #learning rate decay
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.T0)
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[50, 75], gamma=0.2) #learning rate decay
 
     trainer = ModelTrainer(
         model=model,
@@ -131,6 +126,7 @@ def main():
         mode='min', 
         scheduler=scheduler, 
         num_epochs=args.epochs,
+        snapshot_period=args.T0,        
         use_wandb=True,
     )
 

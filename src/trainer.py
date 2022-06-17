@@ -103,7 +103,7 @@ def save_checkpoint(state, save_dir, fn='model_best.pth'):
 
 class ModelTrainer:
     def __init__(self, model, train_loader, valid_loader, loss_func, metric_func, optimizer, device, save_dir, 
-                       mode='max', scheduler=None, num_epochs=25, use_wandb=False):
+                       mode='max', scheduler=None, num_epochs=25, snapshot_period=None, use_wandb=False):
 
         assert mode in ['min', 'max']
 
@@ -118,6 +118,7 @@ class ModelTrainer:
         self.mode = mode
         self.scheduler = scheduler
         self.num_epochs = num_epochs
+        self.snapshot_period = snapshot_period
         self.use_wandb = use_wandb
 
         self.elapsed_time = None
@@ -154,6 +155,11 @@ class ModelTrainer:
         else:
             best_metric = float('inf')
             best_loss = float('inf')
+
+        if self.snapshot_period != None:
+            best_snap_metric = best_metric
+            cur_num_snapshop = 0            
+            snapshop = None
 
         self.model = self.model.to(self.device)
         startTime = datetime.now()     
@@ -215,6 +221,23 @@ class ModelTrainer:
                     save_dir=self.save_path,
                     fn='model_loss_best.pth'
                 )  
+
+            if self.snapshot_period != None:
+                if (self.mode =='min' and valid_metric['metric'].avg < best_snap_metric) or \
+                   (self.mode =='max' and valid_metric['metric'].avg > best_snap_metric) :
+                    best_snap_metric = valid_metric['metric'].avg
+                    snapshop = self.model.state_dict()
+
+                ## save snapshop            
+                if (epoch + 1) % self.snapshot_period == 0:                             
+                    self.__save_model(param=snapshop, fn=f"snapshop_{cur_num_snapshop}.pth")
+
+                    if self.mode =='max':
+                        best_snap_metric = -float('inf')
+                    elif self.mode =='min':
+                        best_snap_metric = float('inf')
+                    
+                    cur_num_snapshop+=1
 
         self.elapsed_time = datetime.now() - startTime
         self.__save_result()

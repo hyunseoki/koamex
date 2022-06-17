@@ -71,20 +71,24 @@ def draw_keypoint(img,
         cv2.circle(
             img=dst,
             center=tuple((int(point[1]), int(point[0]))),
-            radius=int(20 * keypoints_scale),
+            radius=int(keypoints_scale),
             color=keypoints_color,
-            thickness=int(30 * keypoints_scale),
+            thickness=int(keypoints_scale),
             lineType=cv2.LINE_AA,    
         )
         
         if text:
+            if idx > 29:
+                org = tuple((int(point[1]), int(point[0] + 15)))
+            else:
+                org = tuple((int(point[1]), int(point[0])))
             cv2.putText(
                 img=dst,
                 text=str(idx),
-                org=tuple((int(point[1]), int(point[0]))),
+                org=org,
                 fontFace=0,
-                fontScale=int(5*text_scale),
-                thickness=int(10*text_scale),
+                fontScale=text_scale,
+                thickness=int(text_scale*2),
                 color=text_color,        
             )
 
