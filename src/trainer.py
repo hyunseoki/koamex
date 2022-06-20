@@ -158,8 +158,8 @@ class ModelTrainer:
 
         if self.snapshot_period != None:
             best_snap_metric = best_metric
-            cur_num_snapshop = 0            
-            snapshop = None
+            cur_num_snapshot = 0            
+            snapshot = None
 
         self.model = self.model.to(self.device)
         startTime = datetime.now()     
@@ -226,18 +226,22 @@ class ModelTrainer:
                 if (self.mode =='min' and valid_metric['metric'].avg < best_snap_metric) or \
                    (self.mode =='max' and valid_metric['metric'].avg > best_snap_metric) :
                     best_snap_metric = valid_metric['metric'].avg
-                    snapshop = self.model.state_dict()
+                    snapshot = self.model.state_dict()
 
-                ## save snapshop            
-                if (epoch + 1) % self.snapshot_period == 0:                             
-                    self.__save_model(param=snapshop, fn=f"snapshop_{cur_num_snapshop}.pth")
+                ## save snapshot            
+                if (epoch + 1) % self.snapshot_period == 0:
+                    save_checkpoint(
+                        state=snapshot,
+                        save_dir=self.save_path,
+                        fn=f"snapshot_{cur_num_snapshot}.pth",
+                    )  
 
                     if self.mode =='max':
                         best_snap_metric = -float('inf')
                     elif self.mode =='min':
                         best_snap_metric = float('inf')
                     
-                    cur_num_snapshop+=1
+                    cur_num_snapshot+=1
 
         self.elapsed_time = datetime.now() - startTime
         self.__save_result()
