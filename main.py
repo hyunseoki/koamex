@@ -50,7 +50,7 @@ def main():
         print(key, ":", value)
     print('=' * 50)  
 
-    label_df = pd.read_csv(r'data\data_split.csv')
+    label_df = pd.read_csv(r'./data/data_split.csv')
 
     train_df = label_df[label_df['phase']=='train']
     valid_df = label_df[label_df['phase']=='valid']
