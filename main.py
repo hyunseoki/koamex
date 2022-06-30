@@ -24,7 +24,7 @@ def main():
     device = "cuda:1" if torch.cuda.is_available() else "cpu"
     # device = "cpu"
     save_folder = str(os.path.join(r'./checkpoint', datetime.now().strftime("%m%d%H%M%S")))
-    base_path = './data/resized_scale5'
+    base_path = './data/resized_scale5'    
     seed_everything(42)
 
     parser = argparse.ArgumentParser()
@@ -49,6 +49,8 @@ def main():
     for key, value in vars(args).items():
         print(key, ":", value)
     print('=' * 50)  
+
+    assert os.path.isdir(args.base_path), f'wrong path({args.base_path})'
 
     label_df = pd.read_csv(r'./data/data_split.csv')
 

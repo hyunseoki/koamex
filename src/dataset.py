@@ -23,7 +23,7 @@ class KeypointDataset(torch.utils.data.Dataset):
 
         task_n = df_row['task']
         img_fn = os.path.join(self.base_path, task_n, 'images', df_row['fn'])
-        assert os.path.isfile(img_fn), 'wrong img_fn'
+        assert os.path.isfile(img_fn), f'wrong img_fn ({img_fn})'
         mask_fns = [os.path.join(self.base_path, task_n, 'mask', df_row['fn'].split('.')[0], f'{idx}.png') for idx in range(self.num_kp)]
         
         image = cv2.imread(img_fn, cv2.IMREAD_GRAYSCALE)
