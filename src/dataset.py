@@ -27,14 +27,7 @@ class KeypointDataset(torch.utils.data.Dataset):
         mask_fns = [os.path.join(self.base_path, task_n, 'mask', df_row['fn'].split('.')[0], f'{idx}.png') for idx in range(self.num_kp)]
         
         image = cv2.imread(img_fn, cv2.IMREAD_GRAYSCALE)
-        mask = list()
-
-        for mask_fn in mask_fns:
-            m = cv2.imread(mask_fn, cv2.IMREAD_GRAYSCALE)
-            mask.append(m)
-            print(m.shape)
-
-        # mask = [cv2.imread(mask_fn, cv2.IMREAD_GRAYSCALE) for mask_fn in mask_fns]
+        mask = [cv2.imread(mask_fn, cv2.IMREAD_GRAYSCALE) for mask_fn in mask_fns]
 
         assert type(image) == np.ndarray, img_fn
         assert type(mask[0]) == np.ndarray
@@ -69,15 +62,15 @@ class KeypointDataset(torch.utils.data.Dataset):
 def get_train_transforms():
     return A.Compose(
         [
-            A.RandomBrightnessContrast(p=0.3),
-            A.Affine(
-                scale=(0.9, 1.1),
-                rotate=(5),
-                translate_percent=(0.05, 0.05),
-                cval=0,
-                cval_mask=0,
-                p=0.3,
-            ),
+            # A.RandomBrightnessContrast(p=0.3),
+            # A.Affine(
+            #     scale=(0.9, 1.1),
+            #     rotate=(5),
+            #     translate_percent=(0.05, 0.05),
+            #     cval=0,
+            #     cval_mask=0,
+            #     p=0.3,
+            # ),
             ToTensorV2(p=1.0),
         ],
     )
