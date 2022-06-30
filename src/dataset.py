@@ -27,7 +27,14 @@ class KeypointDataset(torch.utils.data.Dataset):
         mask_fns = [os.path.join(self.base_path, task_n, 'mask', df_row['fn'].split('.')[0], f'{idx}.png') for idx in range(self.num_kp)]
         
         image = cv2.imread(img_fn, cv2.IMREAD_GRAYSCALE)
-        mask = [cv2.imread(mask_fn, cv2.IMREAD_GRAYSCALE) for mask_fn in mask_fns]
+        mask = list()
+
+        for mask_fn in mask_fns:
+            m = cv2.imread(mask_fn, cv2.IMREAD_GRAYSCALE)
+            assert type(m) == np.ndarray, f'{mask_fn}'
+            mask.append(m)
+
+        # mask = [cv2.imread(mask_fn, cv2.IMREAD_GRAYSCALE) for mask_fn in mask_fns]
 
         assert type(image) == np.ndarray, img_fn
         assert type(mask[0]) == np.ndarray
