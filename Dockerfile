@@ -5,7 +5,7 @@ WORKDIR /home/workspace
 COPY requirements.txt .
 
 RUN apt-get update -y
-RUN apt-get install -y git
+RUN apt-get install -y git nano
 RUN pip install -r requirements.txt
 
 # RUN /bin/bash -c "source activate koamex && \
