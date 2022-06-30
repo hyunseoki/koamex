@@ -44,10 +44,8 @@ class KeypointDataset(torch.utils.data.Dataset):
             if mask[i].max() == 0:
                 print(os.path.basename(img_fn))
             mask[i] = mask[i] / mask[i].max()
-        
-        print(len(mask))
-        print(mask)
-        mask = np.array(mask, dtype=np.float32)
+
+        # mask = np.array(mask, dtype=np.float32)
         
         if type(image) == torch.Tensor:
             mask = torch.tensor(mask, dtype=torch.float32)
