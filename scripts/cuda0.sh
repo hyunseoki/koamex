@@ -4,7 +4,7 @@ DEVICE = "cuda:0"
 MODEL = "smp"
 COMMENTS = "cos_scheduler_T25_w_L1Loss"
 BASE_PATH = "./data/resized_scale5"
-SAVE_FOLDER = "./checkpoint/$COMMENTS""
+SAVE_FOLDER = "./checkpoint/$COMMENTS"
 
 python main.py --epochs 600 \
                 --batch_size 16 \
