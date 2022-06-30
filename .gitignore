@@ -2,6 +2,7 @@ wandb/
 data/*
 !data/*.csv
 !data/*.py
+!data/*.sh
 
 checkpoint/*
 !checkpoint/.keeper
