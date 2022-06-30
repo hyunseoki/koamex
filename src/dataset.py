@@ -44,6 +44,7 @@ class KeypointDataset(torch.utils.data.Dataset):
             if mask[i].max() == 0:
                 print(os.path.basename(img_fn))
             mask[i] = mask[i] / mask[i].max()
+            mask[i] = mask[i].numpy()
 
         print(mask[0].shape)
         print(mask[-1].shape)
