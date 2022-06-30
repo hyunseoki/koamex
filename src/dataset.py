@@ -31,8 +31,8 @@ class KeypointDataset(torch.utils.data.Dataset):
 
         for mask_fn in mask_fns:
             m = cv2.imread(mask_fn, cv2.IMREAD_GRAYSCALE)
-            assert type(m) == np.ndarray, f'{mask_fn}'
             mask.append(m)
+            print(m.shape)
 
         # mask = [cv2.imread(mask_fn, cv2.IMREAD_GRAYSCALE) for mask_fn in mask_fns]
 
