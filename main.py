@@ -76,7 +76,7 @@ def main():
         batch_size=args.batch_size,
         shuffle=True,
         # num_workers=4, ##workstation
-        num_workers=2, ##server
+        # num_workers=2, ##server
     )
 
     valid_data_loader = torch.utils.data.DataLoader(
@@ -84,7 +84,7 @@ def main():
         batch_size=args.batch_size,
         shuffle=False,
         # num_workers=4, ##workstation
-        num_workers=2, ##server
+        # num_workers=2, ##server
     )    
 
     if args.model == 'custom':
