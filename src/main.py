@@ -1,5 +1,4 @@
 import os
-os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 import argparse
 import pandas as pd
 import torch
@@ -17,6 +16,9 @@ from src import(
     MeanRadialError,
     str2bool,
 )
+
+import warnings
+warnings.filterwarnings("ignore")
 
 def main():
     device = "cuda:1" if torch.cuda.is_available() else "cpu"
@@ -102,17 +104,12 @@ def main():
             activation='softmax',
         )
         print('smp.Unet is created')
-    model.to(args.device)
-
-    # loss = torch.nn.CrossEntropyLoss()
-    # loss = [L1_loss, L2_loss]
-
-    loss = [L2_loss, MeanRadialError(device=args.device, scale=1e-4)]
+    
+    model.to(args.device)        
+    loss = [L1_loss, L2_loss, MeanRadialError(device=args.device, scale=1e-4)]
     metric = mean_radial_error
-    # optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
     optimizer = torch.optim.Adam(model.parameters(), args.lr, betas=(0.9, 0.99))
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.T0)
-    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[50, 75], gamma=0.2) #learning rate decay
 
     trainer = ModelTrainer(
         model=model,
@@ -126,15 +123,16 @@ def main():
         mode='min', 
         scheduler=scheduler, 
         num_epochs=args.epochs,
-        snapshot_period=args.T0,        
-        use_wandb=True,
+        snapshot_period=args.T0,
+        use_wandb=False,
     )
 
-    trainer.initWandb(
-        project_name='koamex',
-        run_name=args.comments,
-        args=args,
-    )
+    if trainer.use_wandb:
+        trainer.initWandb(
+            project_name='koamex',
+            run_name=args.comments,
+            args=args,
+        )
 
     trainer.train()
     
