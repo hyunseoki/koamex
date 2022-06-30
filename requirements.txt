@@ -2,4 +2,3 @@ segmentation-models-pytorch
 wandb
 pandas
 matplotlib
-jupyterlab
